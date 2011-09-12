@@ -1,0 +1,11 @@
+dans le .spec:
+
+
+dans un script postinstall:
+
+chmod 1777 /var/log/activemq
+chkconfig --add activemq
+
+dans un script preuninstall:
+
+chkconfig --del activemq
