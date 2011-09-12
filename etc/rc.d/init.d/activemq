@@ -1,0 +1,186 @@
+#!/bin/bash
+#
+# chkconfig: 345 30 30
+# description: Active MQ queue managers
+#
+
+ACTIVEMQ_BROKERS_DIR=/usr/local/activemq-instances
+ACTIVEMQ_BIN_BASE=/usr/local/apache-activemq-5.5.0
+ACTIVEMQ_LOG_BASE=/var/log/activemq
+ACTIVEMQ_START_DELAY_SECONDS=10
+ACTIVEMQ_STOP_DELAY_SECONDS=10
+
+# Source function library.
+if [ -f /etc/init.d/functions ] ; then
+  . /etc/init.d/functions
+elif [ -f /etc/rc.d/init.d/functions ] ; then
+  . /etc/rc.d/init.d/functions
+else
+  exit 1
+fi
+
+# Check that config directory exists.
+[ -e $ACTIVEMQ_BROKERS_DIR ] || exit 6
+
+RETVAL=0
+
+die() {
+  echo "$@" >&2
+  exit 1
+}
+
+# start one broker
+# $1: path to broker configuration
+# return 0 on success
+start_broker() {
+BDIR="${1:?broker directory not set in start_broker()}"
+(
+  . "$BDIR"/conf/activemq.env
+  which java > /dev/null 2>&- || \
+    die "cannot find java virtual machine (JRE) for broker $B"
+  if ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
+               | grep -v egrep > /dev/null; then
+    echo "won't start broker '$B' (already running)"
+  else
+    echo "starting broker '$B'..."
+          #--user=${ACTIVEMQ_USER:-root} \
+    PID=$(su - ${ACTIVEMQ_USER:-root} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
+    if echo "$PID" | egrep '^[0-9]+$' > /dev/null 2>&1; then
+      sleep $ACTIVEMQ_START_DELAY_SECONDS
+      if kill -0 $PID > /dev/null 2>&1; then
+        echo "...started (pid $PID)"
+      else
+        echo "cannot start broker '$B' (process disapeared)"
+        return 1
+      fi
+    else
+      echo "cannot start broker '$B' (cannot launch process)"
+      return 1
+    fi
+  fi
+)
+}
+
+# stop one broker
+# $1: path to broker configuration
+# return 0 on success
+stop_broker() {
+BDIR="${1:?broker directory not set in stop_broker()}"
+(
+  . "$BDIR"/conf/activemq.env
+  if PLINE=$(ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
+                       | grep -v egrep); then
+    PID=$(echo "$PLINE"|awk '{print $2}')
+    echo "stoping broker '$B' (pid $PID)..."
+    kill $PID
+    I=$ACTIVEMQ_STOP_DELAY_SECONDS
+    while [ $I -gt 0 ]; do
+      sleep 1
+      if kill -0 $PID > /dev/null 2>&1; then
+        I=$(($I - 1))
+        echo "waiting for process death ($I seconds remaining)..."
+      else
+        I=0
+      fi
+    done
+    kill -9 $PID > /dev/null 2>&1
+    if kill -0 $PID > /dev/null 2>&1; then
+      echo "cannot stop broker $B (pid $PID), even with kill -9"
+      return 1
+    else
+      echo "...stopped"
+    fi
+  else
+    echo "won't stop broker '$B' (not running)"
+  fi
+)
+}
+
+# status of one broker
+# $1: path to broker configuration
+# return 0 if broker is running
+status_broker() {
+BDIR="${1:?broker directory not set in status_broker()}"
+(
+  . "$BDIR"/conf/activemq.env
+  which java > /dev/null 2>&- || \
+    die "cannot find java virtual machine (JRE) for broker $B"
+  if PLINE=$(ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
+                       | grep -v egrep); then
+    PID=$(echo "$PLINE"|awk '{print $2}')
+    echo "broker '$B' is running (pid $PID)"
+  else
+    if [ "$AUTOSTART" = yes ] ; then
+      echo "broker '$B' is not running although it is set to autostart"
+    else
+      echo "broker '$B' is not running (never mind it is not set to autostart)"
+    fi
+    return 1
+  fi
+)
+}
+
+# return 0 if all autostart brokers are started (or were already running)
+start() {
+  for BDIR in $ACTIVEMQ_BROKERS_DIR/*; do
+    B="$(basename "$BDIR")"
+    if [ -e "$BDIR"/conf/activemq.env ]; then
+    (
+      . "$BDIR"/conf/activemq.env
+      if [ "$AUTOSTART" = yes ] ; then
+        start_broker "$BDIR"
+      else
+         echo "won't start broker '$B' (not set as autostart)"
+      fi
+    )
+    else
+      echo "won't start queue manager '$B' (no configuration file)"
+    fi
+  done
+}	
+
+# return 0 if all brokers were stoped (or were already stoped)
+stop() {
+  for BDIR in $ACTIVEMQ_BROKERS_DIR/*; do
+    B="$(basename "$BDIR")"
+    (
+      . "$BDIR"/conf/activemq.env
+      stop_broker "$BDIR"
+    )
+  done
+}
+
+# return 0 if all autostart brokers are running
+status() {
+  ALL_AUTOSTART_RUNNING=0
+  for BDIR in $ACTIVEMQ_BROKERS_DIR/*; do
+    B="$(basename "$BDIR")"
+    (
+      . "$BDIR"/conf/activemq.env
+      if [ "$AUTOSTART" = yes ] ; then
+        status_broker "$BDIR"
+      else
+        status_broker "$BDIR" || true
+      fi
+    ) || ALL_AUTOSTART_RUNNING=1
+  done
+  return $ALL_AUTOSTART_RUNNING
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart)
+  	stop && start
+	;;
+  status)
+  	status
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|status}"
+	exit 2
+esac

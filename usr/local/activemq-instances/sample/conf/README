@@ -1,0 +1,7 @@
+To configure a new broker:
+- copy sample configuration directory
+- edit activemq.env to set autostart to yes (if needed)
+- edit activemq.env to set a non-root user
+- edit config.properties to set a broker name and TCP port
+- edit config.properties to set any relevant parameter
+- edit jetty.xml to set a TCP (HTTP) port
