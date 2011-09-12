@@ -22,13 +22,6 @@ fi
 # Check that config directory exists.
 [ -e $ACTIVEMQ_BROKERS_DIR ] || exit 6
 
-RETVAL=0
-
-die() {
-  echo "$@" >&2
-  exit 1
-}
-
 # start one broker
 # $1: path to broker configuration
 # return 0 on success
@@ -36,14 +29,15 @@ start_broker() {
 BDIR="${1:?broker directory not set in start_broker()}"
 (
   . "$BDIR"/conf/activemq.env
-  which java > /dev/null 2>&- || \
-    die "cannot find java virtual machine (JRE) for broker $B"
+  if which java > /dev/null 2>&1; then :; else
+    echo "cannot find java virtual machine (JRE) for broker $B"
+    return 1
+  fi
   if ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
                | grep -v egrep > /dev/null; then
     echo "won't start broker '$B' (already running)"
   else
     echo "starting broker '$B'..."
-          #--user=${ACTIVEMQ_USER:-root} \
     PID=$(su - ${ACTIVEMQ_USER:-root} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
     if echo "$PID" | egrep '^[0-9]+$' > /dev/null 2>&1; then
       sleep $ACTIVEMQ_START_DELAY_SECONDS
@@ -103,8 +97,6 @@ status_broker() {
 BDIR="${1:?broker directory not set in status_broker()}"
 (
   . "$BDIR"/conf/activemq.env
-  which java > /dev/null 2>&- || \
-    die "cannot find java virtual machine (JRE) for broker $B"
   if PLINE=$(ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
                        | grep -v egrep); then
     PID=$(echo "$PLINE"|awk '{print $2}')
