@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<!-- START SNIPPET: example -->
+
 <beans
   xmlns="http://www.springframework.org/schema/beans"
   xmlns:amq="http://activemq.apache.org/schema/core"
@@ -25,7 +25,6 @@
     <!-- Allows us to use system properties as variables in this configuration file -->
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
-            <!--value>file:${activemq.instancebase}/conf/credentials.properties</value-->
             <value>file:${activemq.instancebase}/conf/config.properties</value>
         </property>
     </bean>
@@ -43,18 +42,18 @@
             
             Also, if your producer is "hanging", it's probably due to producer flow control.
             For more information, see:
-            http://activemq.apache.org/producer-flow-control.html
+            http://activemq.apache.org/producer-flow-control.html]
         -->
               
         <destinationPolicy>
             <policyMap>
               <policyEntries>
-                <policyEntry topic=">" producerFlowControl="true" memoryLimit="1mb">
+                <policyEntry topic=">" producerFlowControl="true" memoryLimit="${topicmemorylimit}">
                   <pendingSubscriberPolicy>
                     <vmCursor />
                   </pendingSubscriberPolicy>
                 </policyEntry>
-                <policyEntry queue=">" producerFlowControl="true" memoryLimit="1mb">
+                <policyEntry queue=">" producerFlowControl="true" memoryLimit="${queuememorylimit}">
                   <!-- Use VM cursor for better latency
                        For more information, see:
                        
@@ -78,8 +77,12 @@
             http://activemq.apache.org/jmx.html 
         -->
         <managementContext>
-            <managementContext createConnector="false"/>
+                         <managementContext connectorPort="${jmxconnectorport}" rmiServerPort="${jmxrmiserverport}" jmxDomainName="${jmxdomainname}" />
         </managementContext>
+
+        <!--managementContext>
+            <managementContext createConnector="false"/>
+        </managementContext-->
 
         <!-- 
             Configure message persistence for the broker. The default persistence
@@ -103,7 +106,6 @@
           -->
 
         <systemUsage>
-            <!--systemUsage sendFailIfNoSpace="${sendfailifnospace}"-->
             <systemUsage sendFailIfNoSpace="true">
                 <memoryUsage>
                     <memoryUsage limit="${memoryusagelimit}"/>
@@ -130,15 +132,9 @@
             <transportConnector name="openwire" uri="${uri}"/>
         </transportConnectors>
 
-	<!--services>
-	    <masterConnector remoteURI="${remotemasteruri}" userName="Rob" password="Davies"/>
-	</services-->
-
-        <!--destinations>
-            <queue physicalName="widgets" />
-            <queue physicalName="spacecontrol" />
-            <queue physicalName="displays" />
-        </destinations-->
+	<services>
+	    <masterConnector remoteURI="${remotemasteruri}" ${masterusername} ${masterpassword} />
+	</services>
 
     </broker>
 
@@ -151,4 +147,3 @@
     <import resource="jetty.xml"/>
     
 </beans>
-<!-- END SNIPPET: example -->
