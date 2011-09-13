@@ -38,6 +38,7 @@ BDIR="${1:?broker directory not set in start_broker()}"
     echo "won't start broker '$B' (already running)"
   else
     echo "starting broker '$B'..."
+    chown -R ${ACTIVEMQ_USER:-root} "$BDIR"
     PID=$(su - ${ACTIVEMQ_USER:-root} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
     if echo "$PID" | egrep '^[0-9]+$' > /dev/null 2>&1; then
       sleep $ACTIVEMQ_START_DELAY_SECONDS
