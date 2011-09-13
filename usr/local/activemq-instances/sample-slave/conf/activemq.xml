@@ -95,7 +95,10 @@
             <kahaDB directory="${activemq.instancebase}/data/kahadb"/>
         </persistenceAdapter>
         
-        
+        <services>
+                    <masterConnector remoteURI="${remotemasteruri}"/>
+        </services>       
+ 
           <!--
             The systemUsage controls the maximum amount of space the broker will 
             use before slowing down producers. For more information, see:
@@ -131,10 +134,6 @@
         <transportConnectors>
             <transportConnector name="openwire" uri="${uri}"/>
         </transportConnectors>
-
-	<services>
-	    <masterConnector remoteURI="${remotemasteruri}" ${masterusername} ${masterpassword} />
-	</services>
 
     </broker>
 

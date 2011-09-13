@@ -20,6 +20,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <value>file:${activemq.instancebase}/conf/config.properties</value>
+        </property>
+    </bean>
+
     <bean id="securityLoginService" class="org.eclipse.jetty.security.HashLoginService">
         <property name="name" value="ActiveMQRealm" />
         <property name="config" value="${activemq.instancebase}/conf/jetty-realm.properties" />
@@ -98,7 +104,7 @@
         <property name="connectors">
             <list>
                 <bean id="Connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                    <property name="port" value="8161" />
+                    <property name="port" value="${webadminport}" />
                 </bean>
             </list>
         </property>
