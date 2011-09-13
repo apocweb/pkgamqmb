@@ -6,6 +6,7 @@ License: unknown
 Distribution: Redhat
 Group: Converted/unknown
 Source: %{name}-%{version}.tar.gz
+Buildroot: /var/tmp/%{name}-root
 Packager: Alexandre Bodin
 Buildarch: noarch
 Requires: /sbin/chkconfig

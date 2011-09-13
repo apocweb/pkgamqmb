@@ -1,0 +1,5 @@
+The makefile assumes that the RPM build environment is $HOME/rpmbuild, which
+is the default for RHEL 6 but not yet in RHEL 5.
+Therefore on RHEL 5 one should add a line in its $HOME/.rpmmacros file to
+set it, e.g. if your $HOME is /home/foo, you must define:
+%_topdir /home/foo/rpmbuild

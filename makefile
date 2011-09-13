@@ -22,5 +22,6 @@ re: clean all
 rpm: $(RPM)
 
 $(RPM): $(TARBALL) $(SPEC)
+	mkdir -p ~/rpmbuild/{SOURCES,BUILD,RPMS,SRPMS,SPECS}
 	cp $(TARBALL) ~/rpmbuild/SOURCES/
 	rpmbuild -ba $(SPEC)
