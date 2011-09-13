@@ -9,6 +9,7 @@ ACTIVEMQ_BIN_BASE=/usr/local/apache-activemq-5.5.0
 ACTIVEMQ_LOG_BASE=/var/log/activemq
 ACTIVEMQ_START_DELAY_SECONDS=10
 ACTIVEMQ_STOP_DELAY_SECONDS=10
+AUTOSTART=no
 
 # Source function library.
 if [ -f /etc/init.d/functions ] ; then
@@ -27,8 +28,15 @@ fi
 # return 0 on success
 start_broker() {
 BDIR="${1:?broker directory not set in start_broker()}"
+B="$(basename "$BDIR")"
+PID=none
+ACTIVEMQ_USER=root
 (
-  . "$BDIR"/conf/activemq.env
+  if [ ! -e "$BDIR" ]; then
+    echo "directory $BDIR does not exist"
+    return 1
+  fi
+  [ -e "$BDIR"/conf/activemq.env ] && . "$BDIR"/conf/activemq.env
   if which java > /dev/null 2>&1; then :; else
     echo "cannot find java virtual machine (JRE) for broker $B"
     return 1
@@ -37,9 +45,19 @@ BDIR="${1:?broker directory not set in start_broker()}"
                | grep -v egrep > /dev/null; then
     echo "won't start broker '$B' (already running)"
   else
-    echo "starting broker '$B'..."
-    chown -R ${ACTIVEMQ_USER:-root} "$BDIR"
-    PID=$(su - ${ACTIVEMQ_USER:-root} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
+    if [ "$(id -u)" = 0 ]; then
+      chown -R ${ACTIVEMQ_USER} "$BDIR"
+      echo "starting broker '$B'..."
+      PID=$(su - ${ACTIVEMQ_USER} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
+    else
+      if [ "$(id -u)" = "$(id -u ${ACTIVEMQ_USER})" ]; then
+        echo "starting broker '$B'..."
+        PID=$(java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo $!)
+      else
+        echo "cannot start broker '$B', need to be either root or '$ACTIVEMQ_USER' user"
+        return 1
+      fi
+    fi
     if echo "$PID" | egrep '^[0-9]+$' > /dev/null 2>&1; then
       sleep $ACTIVEMQ_START_DELAY_SECONDS
       if kill -0 $PID > /dev/null 2>&1; then
@@ -61,11 +79,16 @@ BDIR="${1:?broker directory not set in start_broker()}"
 # return 0 on success
 stop_broker() {
 BDIR="${1:?broker directory not set in stop_broker()}"
+B="$(basename "$BDIR")"
 (
-  . "$BDIR"/conf/activemq.env
+  [ -e "$BDIR"/conf/activemq.env ] && . "$BDIR"/conf/activemq.env
   if PLINE=$(ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
                        | grep -v egrep); then
     PID=$(echo "$PLINE"|awk '{print $2}')
+    if kill -0 $PID > /dev/null 2>&1; then :; else
+      echo "cannot stop broker '$B' (probably because user is not priviledged)"
+      return 1
+    fi
     echo "stoping broker '$B' (pid $PID)..."
     kill $PID
     I=$ACTIVEMQ_STOP_DELAY_SECONDS
@@ -96,8 +119,9 @@ BDIR="${1:?broker directory not set in stop_broker()}"
 # return 0 if broker is running
 status_broker() {
 BDIR="${1:?broker directory not set in status_broker()}"
+B="$(basename "$BDIR")"
 (
-  . "$BDIR"/conf/activemq.env
+  [ -e "$BDIR"/conf/activemq.env ] && . "$BDIR"/conf/activemq.env
   if PLINE=$(ps auxwww | egrep "java.*-Dactivemq.classpath=$BDIR/conf" \
                        | grep -v egrep); then
     PID=$(echo "$PLINE"|awk '{print $2}')
@@ -137,7 +161,7 @@ stop() {
   for BDIR in $ACTIVEMQ_BROKERS_DIR/*; do
     B="$(basename "$BDIR")"
     (
-      . "$BDIR"/conf/activemq.env
+      [ -e "$BDIR"/conf/activemq.env ] && . "$BDIR"/conf/activemq.env
       stop_broker "$BDIR"
     )
   done
@@ -149,7 +173,7 @@ status() {
   for BDIR in $ACTIVEMQ_BROKERS_DIR/*; do
     B="$(basename "$BDIR")"
     (
-      . "$BDIR"/conf/activemq.env
+      [ -e "$BDIR"/conf/activemq.env ] && . "$BDIR"/conf/activemq.env
       if [ "$AUTOSTART" = yes ] ; then
         status_broker "$BDIR"
       else
@@ -173,7 +197,17 @@ case "$1" in
   status)
   	status
 	;;
+  start_broker)
+        start_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
+        ;;
+  stop_broker)
+        stop_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
+        ;;
+  status_broker)
+        status_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
+        ;;
   *)
-	echo $"Usage: $0 {start|stop|restart|status}"
+	echo "Usage: $0 {start|stop|restart|status}"
+        echo "       $0 {start_broker|stop_broker|status_broker} broker_name"
 	exit 2
 esac
