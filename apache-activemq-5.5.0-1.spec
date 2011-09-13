@@ -6,24 +6,28 @@ License: unknown
 Distribution: Redhat
 Group: Converted/unknown
 Source: %{name}-%{version}.tar.gz
-#Packager:
+Packager: Alexandre Bodin
 Buildarch: noarch
 Requires: /sbin/chkconfig
 
 %description
 Apache ActiveMQ
 
-%prep 
+%prep
+# preparation step: untar the source tarball
 %setup -q -c %{name}-%{version}
 
 %build
+# nothing to build
 
 %install
+# install step
 rm -rf $RPM_BUILD_ROOT
 mkdir $RPM_BUILD_ROOT
 mv * $RPM_BUILD_ROOT
 
 %clean
+# clean step
 rm -rf $RPM_BUILD_ROOT
 
 %files
@@ -33,10 +37,13 @@ rm -rf $RPM_BUILD_ROOT
 /var/log/activemq
 
 %post
+# post install script (will be run as root)
 /sbin/chkconfig --add activemq
-chomd 1777 /var/log/activemq
+chmod 1777 /var/log/activemq
 
 %preun
+# pre uninstall script (will be run as root)
+/etc/rc.d/init.d/activemq stop
 /sbin/chkconfig --del activemq
 
 %changelog
