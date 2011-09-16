@@ -203,6 +203,10 @@ case "$1" in
   status_broker)
         status_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
         ;;
+  restart_broker)
+        stop_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
+        start_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
+        ;;
   *)
 	echo "Usage: $0 {start|stop|status}"
         echo "       $0 {start_broker|stop_broker|status_broker} broker_name"
