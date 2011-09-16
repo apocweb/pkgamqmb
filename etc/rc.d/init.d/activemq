@@ -209,6 +209,6 @@ case "$1" in
         ;;
   *)
 	echo "Usage: $0 {start|stop|status}"
-        echo "       $0 {start_broker|stop_broker|status_broker} broker_name"
+        echo "       $0 {start_broker|stop_broker|status_broker|restart_broker} broker_name"
 	exit 2
 esac
