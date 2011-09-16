@@ -48,7 +48,7 @@ ACTIVEMQ_USER=root
     if [ "$(id -u)" = 0 ]; then
       chown -R ${ACTIVEMQ_USER} "$BDIR"
       echo "starting broker '$B'..."
-      PID=$(su - ${ACTIVEMQ_USER} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
+      PID=$(runuser - ${ACTIVEMQ_USER} -c "java $JVM_PARAMS -Dactivemq.classpath=$BDIR/conf -Dactivemq.webbase=$ACTIVEMQ_BIN_BASE -Dactivemq.binbase=$ACTIVEMQ_BIN_BASE -Dactivemq.instancebase=$BDIR -Dactivemq.base=$BDIR -Dactivemq.logfile=$ACTIVEMQ_LOG_BASE/$B-log4j.log -Dactivemq.auditfile=$ACTIVEMQ_LOG_BASE/$B-audit.log -jar $ACTIVEMQ_BIN_BASE/bin/run.jar start >> $ACTIVEMQ_LOG_BASE/$B-system.log 2>&1 <&- & echo "'$!')
     else
       if [ "$(id -u)" = "$(id -u ${ACTIVEMQ_USER})" ]; then
         echo "starting broker '$B'..."
@@ -191,9 +191,6 @@ case "$1" in
   stop)
   	stop
 	;;
-  restart)
-  	stop && start
-	;;
   status)
   	status
 	;;
@@ -207,7 +204,7 @@ case "$1" in
         status_broker "$ACTIVEMQ_BROKERS_DIR/${2:?broker_name not specified}"
         ;;
   *)
-	echo "Usage: $0 {start|stop|restart|status}"
+	echo "Usage: $0 {start|stop|status}"
         echo "       $0 {start_broker|stop_broker|status_broker} broker_name"
 	exit 2
 esac
