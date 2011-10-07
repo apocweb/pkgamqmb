@@ -1,0 +1,6 @@
+To configure a new broker:
+- copy sample configuration directory
+- edit activemq.env to set autostart to yes (if needed)
+- edit activemq.env to set a non-root user
+- edit config.properties to set a broker name and TCP ports and an Oracle connexion and allocated ressource
+- edit jetty-realm.properties to change the webadmin login/passwd
