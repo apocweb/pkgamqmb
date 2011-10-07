@@ -100,7 +100,7 @@
             http://activemq.apache.org/persistence.html 
         -->
         <persistenceAdapter>
-            <jdbcPersistenceAdapter dataDirectory="${activemq.base}/activemq-data" dataSource="#oracle-ds"/>
+            <jdbcPersistenceAdapter dataSource="#oracle-ds"/>
             <!--kahaDB directory="${activemq.instancebase}/data/kahadb"/-->
         </persistenceAdapter>
         
