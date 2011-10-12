@@ -1,6 +1,6 @@
 Name: apache-activemq
 Version: 5.5.0
-Release: 1
+Release: 2
 Summary: Apache ActiveMQ
 License: unknown
 Distribution: Redhat
@@ -48,5 +48,8 @@ chmod 1777 /var/log/activemq
 /sbin/chkconfig --del activemq
 
 %changelog
+* Wed Oct 12 2011 Alexandre Bodin
+- Adding Oracle JDBC master slave sample mode
+- Removing Pure master slave sample mode
 * Thu Sep 13 2011 Alexandre Bodin
 - Initial package
