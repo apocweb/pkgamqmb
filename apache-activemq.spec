@@ -1,6 +1,6 @@
 Name: apache-activemq
 Version: 5.5.0
-Release: 2
+Release: 3
 Summary: Apache ActiveMQ
 License: unknown
 Distribution: Redhat
@@ -48,6 +48,9 @@ chmod 1777 /var/log/activemq
 /sbin/chkconfig --del activemq
 
 %changelog
+* Fri Oct 28 2011 Grégoire Barbier
+- Fixed variable name in configuration (JVM_PARAMS instead of JVM_PARAMETERS)
+- Added JMX remote parameter in default/sample configuration
 * Wed Oct 12 2011 Alexandre Bodin
 - Adding Oracle JDBC master slave sample mode
 - Removing Pure master slave sample mode

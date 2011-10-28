@@ -40,7 +40,7 @@
     <!-- 
         The <broker> element is used to configure the ActiveMQ broker. 
     -->
-    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="${brokername}" dataDirectory="${activemq.instancebase}/data" destroyApplicationContextOnStop="true">
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="${brokername}" dataDirectory="${activemq.instancebase}/data" destroyApplicationContextOnStop="true" useJmx="true">
  
         <!--
 			For better performances use VM cursor and small memory limit.

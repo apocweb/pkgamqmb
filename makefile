@@ -1,10 +1,10 @@
 .PHONY: all clean re rpm tar
 
 VERSION=5.5.0
-RELEASE=1
+RELEASE=3
 TARBALL=apache-activemq-$(VERSION).tar.gz
 TARBALL_ROOTS=etc usr var
-SPEC=apache-activemq-$(VERSION)-$(RELEASE).spec
+SPEC=apache-activemq.spec
 RPM=~/rpmbuild/RPMS/noarch/apache-activemq-$(VERSION)-$(RELEASE).noarch.rpm
 
 all: tar rpm
