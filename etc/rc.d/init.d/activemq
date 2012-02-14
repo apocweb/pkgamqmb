@@ -6,7 +6,6 @@
 
 ACTIVEMQ_BROKERS_DIR=/usr/local/activemq-instances
 ACTIVEMQ_BIN_BASE=/usr/local/apache-activemq-5.5.0
-ACTIVEMQ_LOG_BASE=/var/log/activemq
 ACTIVEMQ_START_DELAY_SECONDS=0
 ACTIVEMQ_STOP_DELAY_SECONDS=10
 AUTOSTART=no
@@ -29,6 +28,7 @@ fi
 start_broker() {
 BDIR="${1:?broker directory not set in start_broker()}"
 B="$(basename "$BDIR")"
+ACTIVEMQ_LOG_BASE="$BDIR"/log
 PID=none
 ACTIVEMQ_USER=root
 (

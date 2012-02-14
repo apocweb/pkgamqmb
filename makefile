@@ -3,7 +3,7 @@
 VERSION=5.5.0
 RELEASE=3
 TARBALL=apache-activemq-$(VERSION).tar.gz
-TARBALL_ROOTS=etc usr var
+TARBALL_ROOTS=etc usr 
 SPEC=apache-activemq.spec
 RPM=~/rpmbuild/RPMS/noarch/apache-activemq-$(VERSION)-$(RELEASE).noarch.rpm
 
